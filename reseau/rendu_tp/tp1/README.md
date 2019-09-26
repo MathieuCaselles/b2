@@ -23,4 +23,12 @@ Pour afficher la table de routahe je fais `ìp route`:
 
     [centos8@localhost /]$ ip route                                                                                                         default via 10.0.2.2 dev enp0s3 proto dhcp metric 100                                                                                   10.0.2.0/24 dev enp0s3 proto kernel scope link src 10.0.2.15 metric 100                                                                 192.168.219.0/24 dev enp0s8 proto kernel scope link src 192.168.219.8 metric 101 
 
-Ces lignes montrent tout simplement les routes  à prendre lors de l'utilisation de ces ip.
+Ces lignes montrent tout simplement les routes à prendre lors de l'utilisation de ces ip.
+
+Pour afficher la table de routahe je fais `arp -a`:
+
+    ? (192.168.219.1) at 0a:00:27:00:00:1b [ether] on enp0s8
+    _gateway (10.0.2.2) at 52:54:00:12:35:02 [ether] on enp0s3
+    ? (192.168.219.2) at 08:00:27:a0:04:e2 [ether] on enp0s8
+
+Ces lignes montrent tout simplement à quelle adresse mac appartient chaque ip.
