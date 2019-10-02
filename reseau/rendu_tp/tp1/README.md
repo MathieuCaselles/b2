@@ -25,10 +25,70 @@ Pour afficher la table de routahe je fais `ìp route`:
 
 Ces lignes montrent tout simplement les routes à prendre lors de l'utilisation de ces ip.
 
-Pour afficher la table de routahe je fais `arp -a`:
+Pour afficher la table de routage je fais `arp -a`:
 
     ? (192.168.219.1) at 0a:00:27:00:00:1b [ether] on enp0s8
     _gateway (10.0.2.2) at 52:54:00:12:35:02 [ether] on enp0s3
     ? (192.168.219.2) at 08:00:27:a0:04:e2 [ether] on enp0s8
 
 Ces lignes montrent tout simplement à quelle adresse mac appartient chaque ip.
+
+Je récupère la liste des ports en écoute avec `ss -lput`
+
+    [centos8@localhost ~]$ ss -lput                                                                                         Netid      State        Recv-Q       Send-Q                     Local Address:Port               Peer Address:Port      udp        UNCONN       0            0                   192.168.219.8%enp0s8:bootpc                  0.0.0.0:*         udp        UNCONN       0            0                       10.0.2.15%enp0s3:bootpc                  0.0.0.0:*         udp        UNCONN       0            0                              127.0.0.1:323                     0.0.0.0:*         udp        UNCONN       0            0                                  [::1]:323                        [::]:*         tcp        LISTEN       0            128                              0.0.0.0:ssh                     0.0.0.0:*         tcp        LISTEN       0            128                                 [::]:ssh                        [::]:*        
+
+Je remarque qu'il y a 2 écoute en TCP avec le ssh.  
+  
+Le firewall est actuellement activé:
+
+    [centos8@localhost ~]$ sudo firewall-cmd --state
+    running
+
+## II. Edit configuration
+
+### 1. Configuration cartes réseau
+
+Je défini une ip static pour enp0s8 et enp0s9 en oubliant pas après le `sudo nmcli c reload` et de restart l'interface:
+
+    NAME=enp0s8                                                                                                             DEVICE=enp0s8                                                                                                           BOOTPROTO=static                                                                                                        ONBOOT=yes                                                                                                              IPADDR=192.168.219.8 
+
+Je vérifie ensuite si les changements:
+
+    [centos8@localhost ~]$ ip a
+    1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+        link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+        inet 127.0.0.1/8 scope host lo
+        valid_lft forever preferred_lft forever
+        inet6 ::1/128 scope host
+        valid_lft forever preferred_lft forever
+    2: enp0s3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+        link/ether 08:00:27:a5:6c:45 brd ff:ff:ff:ff:ff:ff
+        inet 10.0.2.15/24 brd 10.0.2.255 scope global dynamic noprefixroute enp0s3
+        valid_lft 86004sec preferred_lft 86004sec
+        inet6 fe80::4ad6:a897:e477:132f/64 scope link noprefixroute
+        valid_lft forever preferred_lft forever
+    3: enp0s8: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+        link/ether 08:00:27:16:68:b3 brd ff:ff:ff:ff:ff:ff
+        inet 192.168.219.8/24 brd 192.168.219.255 scope global noprefixroute enp0s8
+        valid_lft forever preferred_lft forever
+        inet6 fe80::a00:27ff:fe16:68b3/64 scope link
+        valid_lft forever preferred_lft forever
+    4: enp0s9: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+        link/ether 08:00:27:86:f2:8b brd ff:ff:ff:ff:ff:ff
+        inet 192.168.219.9/24 brd 192.168.219.255 scope global noprefixroute enp0s9
+        valid_lft forever preferred_lft forever
+        inet6 fe80::a00:27ff:fe86:f28b/64 scope link
+        valid_lft forever preferred_lft forever7
+
+    [centos8@localhost ~]$ ip route
+    default via 10.0.2.2 dev enp0s3 proto dhcp metric 100
+    10.0.2.0/24 dev enp0s3 proto kernel scope link src 10.0.2.15 metric 100
+    192.168.219.0/24 dev enp0s8 proto kernel scope link src 192.168.219.8 metric 103
+    192.168.219.0/24 dev enp0s9 proto kernel scope link src 192.168.219.9 metric 104
+
+### 2. Serveur SSH
+
+Je modifie la configuration du système pour que le serveur SSH tourne sur le port 2222 en modifiant le port dans `sudo nano /etc/ssh/sshd_config` et `sudo nano /etc/ssh/sshd_config` puis en faisant `sudo firewall-cmd --permanent --add-port=2222/tcp`.
+
+Je test de me reconnecter en ssh avec `ssh centos8@192.168.219.8 -p 2222` et cela fonctionne bien.
+
