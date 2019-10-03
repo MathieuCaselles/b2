@@ -147,6 +147,8 @@ Pour la preuve que vm1 passe bien par le routeur pour joindre internet j'utilise
     8  * * *
     9  *^C
 
+![alt text](https://github.com/MathieuCaselles/b2/blob/master/reseau/rendu_tp/tp1/gns3-screen.png)
+
 ## IV. Autres applications et métrologie
 
 ### 1. Commandes
@@ -161,7 +163,10 @@ Le port est bien déja ouvert dans le firewall:
     Warning: ALREADY_ENABLED: cockpit
     success
 
+Pour y accèder je rentre l'adresse enp0s8 sur mon navigateur en spécifiant le port 9090.
 Cockpit est en fait une interface graphque de centos c'est super cool on peut quasiment tout modifier via l'interface graphique.
 
 ### 3. Netdata
 
+Je met en place Netdata et m'y connecte de la même manière de cockpit mais avec le port 19999 à la place.
+J'y découvre énooooooooooormément de graphique à croire que le scrolls est infini.
