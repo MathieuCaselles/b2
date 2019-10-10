@@ -102,3 +102,4 @@ Mais en regardant les autres liaisons, on voit bien que la trame est passé de S
 ![alt text](https://github.com/MathieuCaselles/b2/blob/master/reseau/rendu_tp/tp2/liaisonSwitch-1-2.png)
 ![alt text](https://github.com/MathieuCaselles/b2/blob/master/reseau/rendu_tp/tp2/liaisonSwitch-1-3.png)
 
+faire le shéma trajet requete arp a partir de screen
