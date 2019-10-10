@@ -5,7 +5,6 @@ Vagrant.configure("2") do |config|
   config.vm.define "master" do |master|
     master.vm.hostname = "master"
     master.vm.network "private_network", ip: "192.168.64.16"
-    master.vm.provision "file", source: "files/wiki.lab.local.conf", destination: "/etc/apache2/sites-available/dokuwiki_name.conf"
     master.vm.provision "shell", inline: <<-SHELL
     sudo apt-get update -y
     sudo apt-get install php-geshi -y
@@ -17,13 +16,14 @@ Vagrant.configure("2") do |config|
     cd dokuwiki/
     sudo mv * ../
     sudo chown -R vagrant:www-data /var/www/html/
+    Chown - r www-data
     SHELL
+    master.vm.provision "file", source: "files/wiki.lab.local.conf", destination: "/etc/apache2/sites-available/dokuwiki_name.conf"
   end
 
   config.vm.define "backup" do |backup|
     backup.vm.hostname = "backup"
     backup.vm.network "private_network", ip: "192.168.64.16"
-    backup.vm.provision "file", source: "files/wiki.lab.local.conf", destination: "/etc/apache2/sites-available/dokuwiki_name.conf"
     backup.vm.provision "shell", inline: <<-SHELL
     sudo apt-get update -y
     sudo apt-get install php-geshi -y
@@ -35,6 +35,8 @@ Vagrant.configure("2") do |config|
     cd dokuwiki/
     sudo mv * ../
     sudo chown -R vagrant:www-data /var/www/html/
+    Chown - r www-data
     SHELL
+    backup.vm.provision "file", source: "files/wiki.lab.local.conf", destination: "/etc/apache2/sites-available/dokuwiki_name.conf"
   end
 end
