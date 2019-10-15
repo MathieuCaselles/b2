@@ -250,7 +250,7 @@ La topologie n'a pas changé pas besoin de remettre un screen pour juste un cabl
 
 Une fois configuré, on met en evidence avec wireshark les trames lacp: (capturer sur les 2 cables donc):
 
-    ![alt text](https://github.com/MathieuCaselles/b2/blob/master/reseau/rendu_tp/tp2/lacp.png)
+![alt text](https://github.com/MathieuCaselles/b2/blob/master/reseau/rendu_tp/tp2/lacp.png)
 
 
 
