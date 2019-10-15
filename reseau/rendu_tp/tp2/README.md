@@ -100,6 +100,164 @@ STP a donc désactivé  le lien entre SW2 et SW3. On peut le verifier avec wires
 Mais en regardant les autres liaisons, on voit bien que la trame est passé de SW2 à SW1 puis de SW1 à SW3:  
 
 ![alt text](https://github.com/MathieuCaselles/b2/blob/master/reseau/rendu_tp/tp2/liaisonSwitch-1-2.png)
-![alt text](https://github.com/MathieuCaselles/b2/blob/master/reseau/rendu_tp/tp2/liaisonSwitch-1-3.png)
+![alt text](https://github.com/MathieuCaselles/b2/blob/master/reseau/rendu_tp/tp2/liaisonSwitch-1-3.png)  
+  
 
-faire le shéma trajet requete arp a partir de screen
+
+Schéma montrant e trajet d'un requette arp:
+
+![alt text](https://github.com/MathieuCaselles/b2/blob/master/reseau/rendu_tp/tp2/schemaArp.png)  
+
+
+
+### Reconfigurer STP
+
+Je change la priorité de mon switch numéro 3 qui n'est pas root bridge avec la commande `conf t` puis `spanning-tree vlan 1 priority 8192` c'est vlan 1 car c'est choisis par défaut et je sais que 8192 est possible car c'est un multiple de 4096.  
+
+Je vérifie les changement :
+
+    IOU3#show spanning-tree
+
+    VLAN0001
+    Spanning tree enabled protocol rstp
+    Root ID    Priority    8193
+                Address     aabb.cc00.0300
+                This bridge is the root
+                Hello Time   2 sec  Max Age 20 sec  Forward Delay 15 sec
+
+Je peux d'ailleur constater que la priorité de switch3 étant désormais la plus basse, il est désormais élu root bridge !  
+
+## Isolation
+
+### 1.Simple
+
+![alt text](https://github.com/MathieuCaselles/b2/blob/master/reseau/rendu_tp/tp2/isolation1.png)
+
+    10   vlan10_PC1                       active    Et0/0
+    20   vlan20_pc2_pc3                   active    Et0/1, Et0/2  
+
+
+
+`PC2` ne peut joindre que `PC3`
+
+    PC-2> ping 10.2.3.3
+    84 bytes from 10.2.3.3 icmp_seq=1 ttl=64 time=0.157 ms
+    84 bytes from 10.2.3.3 icmp_seq=2 ttl=64 time=0.487 ms
+    ^C
+    PC-2> ping 10.2.3.1
+
+    host (10.2.3.1) not reachable
+
+`PC1` ne peut joindre personne alors qu'il est dans le même réseau:
+
+    PC-1> ping 10.2.3.2
+    host (10.2.3.2) not reachable
+
+    PC-1> ping 10.2.3.3
+    host (10.2.3.3) not reachable
+
+
+### 2. Avec trunk
+
+
+![alt text](https://github.com/MathieuCaselles/b2/blob/master/reseau/rendu_tp/tp2/isolation2.png)
+
+    switch1:
+    10   net1                             active    Et0/0
+    20   net2                             active    Et0/2
+
+    switch2:
+    10   net1                             active    Et0/1
+    20   net2                             active    Et0/2
+
+
+
+
+    IOU1#show interface trunk
+
+    Port        Mode             Encapsulation  Status        Native vlan
+    Et0/1       on               802.1q         trunking      1
+
+    Port        Vlans allowed on trunk
+    Et0/1       10,20
+
+    Port        Vlans allowed and active in management domain
+    Et0/1       10,20
+
+    Port        Vlans in spanning tree forwarding state and not pruned
+    Et0/1       10,20
+
+
+
+    IOU2#show interface trunk
+
+    Port        Mode             Encapsulation  Status        Native vlan
+    Et0/0       on               802.1q         trunking      1
+
+    Port        Vlans allowed on trunk
+    Et0/0       10,20
+
+    Port        Vlans allowed and active in management domain
+    Et0/0       10,20
+
+    Port        Vlans in spanning tree forwarding state and not pruned
+    Et0/0       10,20
+
+
+
+`PC1` ne peut joindre que `PC3`:
+
+    PC-1> ping 10.2.10.2
+    84 bytes from 10.2.10.2 icmp_seq=1 ttl=64 time=0.370 ms
+    84 bytes from 10.2.10.2 icmp_seq=2 ttl=64 time=0.451 ms
+    ^C
+    PC-1> ping 10.2.20.1
+    No gateway found
+
+    PC-1> ping 10.2.20.2
+    No gateway found
+
+
+`PC4` ne peut joindre que `PC2`:
+
+    PC-4> ping 10.2.20.1
+    84 bytes from 10.2.20.1 icmp_seq=1 ttl=64 time=0.247 ms
+    84 bytes from 10.2.20.1 icmp_seq=2 ttl=64 time=0.428 ms
+    84 bytes from 10.2.20.1 icmp_seq=3 ttl=64 time=0.341 ms
+    84 bytes from 10.2.20.1 icmp_seq=4 ttl=64 time=0.465 ms
+    84 bytes from 10.2.20.1 icmp_seq=5 ttl=64 time=0.722 ms
+
+    PC-4> ping 10.2.10.1
+    No gateway found
+
+    PC-4> ping 10.2.10.2
+    No gateway found
+
+
+Mise en évidence d'utilisation des VLAN's avec Wireshark:
+
+Mon wireshar étant totalement buggué, les captures sont celle d'antoine durand pour la démonstration:
+
+![alt text](https://github.com/MathieuCaselles/b2/blob/master/reseau/rendu_tp/tp2/ping_switch.png)
+
+![alt text](https://github.com/MathieuCaselles/b2/blob/master/reseau/rendu_tp/tp2/blind_man.png)
+
+On peut constater dans la première capture qu'il y a une requete arp broadcast qui va passer uniquement dans le vlan 20 (on le voit a la marque bleu) et on voit donc dans la deuxieme capture qui regarde dans une liaison vlan 10 que la requete broadcast n'est pas passé. 
+
+## IV. Need perfs
+
+La topologie n'a pas changé pas besoin de remettre un screen pour juste un cable en plus.
+
+Une fois configuré, on met en evidence avec wireshark les trames lacp: (capturer sur les 2 cables donc):
+
+    ![alt text](https://github.com/MathieuCaselles/b2/blob/master/reseau/rendu_tp/tp2/lacp.png)
+
+
+
+`show ip interface po1` ne me montre pas la bande passante mais me montre:
+
+    Port-channel1 is up, line protocol is up
+    Inbound  access list is not set
+    Outgoing access list is not set
+
+Je n'ai pas réussis à trouver comment corriger cela.
