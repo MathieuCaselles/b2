@@ -1,6 +1,6 @@
-#TP  HTTP
+# TP  HTTP
 
-# Soleil
+## Soleil
 
 Pour la configuration du servername, je donne els droit à www-data pour le chemin /var/www/html/ pour accéder a dokuwiki et a /etc/apache2/ pour y déplacer mon fichier config wiki.lab.local.conf servant a paramétrer le ServerName.  
   
