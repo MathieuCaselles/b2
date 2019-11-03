@@ -70,7 +70,7 @@ Nombre de cable nécessaire :
 * Soit 44 câbles au total.
 
 
-![alt text](https://github.com/MathieuCaselles/b2/blob/master/reseau/rendu_tp/tp2/screen.png)
+![alt text](https://github.com/MathieuCaselles/b2/blob/master/reseau/rendu_tp/tp3/screen.png)
 
 
 Réseau | Adresse | Vlan | Description
