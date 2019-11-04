@@ -131,3 +131,93 @@ L'infra fonctionne:
 
 ### Qui a accès à qui exactement ?
 
+Il faut créer des ACL sur le router car actuellement tout le monde peut se ping à causes des sous interfaces du routeur. Je met des des ACL pour interdire certaines ip d'aller ping d'autres ip non voulu.  
+  
+
+Pour se faire je commence par le classique `conf t`.
+
+Je créé ensuite une liste ACL étendue pour le réseau admin d'abord avec `access-list 100 deny ip 10.3.10.0 0.0.0.255 10.3.20.0 0.0.0.255`.  
+Cette premiere commande veut dire que je créer un access-list lié au numéro 100 qui va interdire les ip du réseau `10.3.10.0/24` (du réseau admin) de communiquer avec le réseau `10.3.20.0/24` (le réseau user).  
+Je répète ensuite cette ligne de commande autant de fois que je veux que le réseau admin ne doit pas communiquer avec d'autres réseaux précis. 
+  
+Je termine ensuite avec `access-list 100 permit ip any any` sinon j'aurais un problème de timeout avec toute les ip.  
+  
+Vu que le réseau admin se situe sur la sous interface e0/0.10, je lie donc cette access-list avec ce sous réseau:
+
+    R1(config)#int e0/0.10
+    R1(config-subif)#ip access-group 100 in
+  
+Le in précise que tout le trafic entrant par cette interface sera contrôlé.  
+
+Et je refais pareil avec toute les interface en changeant le numéro de l'access-list par 101, 102 etc et en continuant a l'assigner à l'interface concernée.  
+
+J'obtient à la fin tout cela:
+
+    R1#show access-list
+    Extended IP access list 100
+        10 deny ip 10.3.10.0 0.0.0.255 10.3.20.0 0.0.0.255 (9 matches)
+        20 deny ip 10.3.10.0 0.0.0.255 10.3.30.0 0.0.0.255 (6 matches)
+        30 permit ip any any (19 matches)
+    Extended IP access list 101
+        10 deny ip 10.3.20.0 0.0.0.255 10.3.10.0 0.0.0.255 (9 matches)
+        20 deny ip 10.3.20.0 0.0.0.255 10.3.30.0 0.0.0.255 (6 matches)
+        30 deny ip 10.3.20.0 0.0.0.255 10.3.50.0 0.0.0.255 (6 matches)
+        40 permit ip any any (4 matches)
+    Extended IP access list 102
+        10 deny ip 10.3.30.0 0.0.0.255 10.3.10.0 0.0.0.255 (6 matches)
+        20 deny ip 10.3.30.0 0.0.0.255 10.3.20.0 0.0.0.255
+        30 deny ip 10.3.30.0 0.0.0.255 10.3.40.0 0.0.0.255
+        40 deny ip 10.3.30.0 0.0.0.255 10.3.50.0 0.0.0.255
+        50 permit ip any any
+    Extended IP access list 103
+        10 deny ip 10.3.40.0 0.0.0.255 10.3.30.0 0.0.0.255
+        20 deny ip 10.3.40.0 0.0.0.255 10.3.50.0 0.0.0.255
+        30 permit ip any any (4 matches)
+    Extended IP access list 104
+        10 deny ip 10.3.50.0 0.0.0.255 10.3.20.0 0.0.0.255 (6 matches)
+        20 deny ip 10.3.50.0 0.0.0.255 10.3.30.0 0.0.0.255
+        30 deny ip 10.3.50.0 0.0.0.255 10.3.40.0 0.0.0.255 (6 matches)
+        40 deny ip 10.3.50.0 0.0.0.255 10.3.60.0 0.0.0.255
+        50 permit ip any any
+    Extended IP access list 105
+        10 deny ip 10.3.60.0 0.0.0.255 10.3.50.0 0.0.0.255 (6 matches)
+        20 permit ip any any
+
+  
+'est bon ! le `"qui a accès à qui exactement ?"` est fonctionnel !
+
+Voici quelques test: 
+
+    A3> ping 10.3.20.7
+    *10.3.10.254 icmp_seq=1 ttl=255 time=32.167 ms (ICMP type:3, code:13, Communication administratively prohibited)
+    *10.3.10.254 icmp_seq=2 ttl=255 time=13.190 ms (ICMP type:3, code:13, Communication administratively prohibited)
+    *10.3.10.254 icmp_seq=3 ttl=255 time=7.101 ms (ICMP type:3, code:13, Communication administratively prohibited)
+
+L'admin3 n'a pas le droit de joindre le user7 !
+
+    A3> ping 10.3.50.2
+    10.3.50.2 icmp_seq=1 timeout
+    10.3.50.2 icmp_seq=2 timeout
+    84 bytes from 10.3.50.2 icmp_seq=3 ttl=63 time=13.085 ms
+    84 bytes from 10.3.50.2 icmp_seq=4 ttl=63 time=22.440 ms
+    84 bytes from 10.3.50.2 icmp_seq=5 ttl=63 time=20.626 ms
+  
+Par contre le serveur sensible oui ! Les timeout du début sont la à cause du fait que les ACL rajoutent du lag au serveur.
+
+    P1> ping 10.3.10.3
+    10.3.10.3 icmp_seq=1 timeout
+    10.3.10.3 icmp_seq=2 timeout
+    84 bytes from 10.3.10.3 icmp_seq=3 ttl=63 time=19.150 ms
+    84 bytes from 10.3.10.3 icmp_seq=4 ttl=63 time=20.701 ms
+    84 bytes from 10.3.10.3 icmp_seq=5 ttl=63 time=13.759 ms
+
+L'imprimante p1 arrive bien a ping admin3! Et tout le monde d'ailleur ! Sauf les serveurs sensible (ss):
+
+    P1> ping 10.3.50.1
+    *10.3.60.254 icmp_seq=1 ttl=255 time=14.725 ms (ICMP type:3, code:13, Communication administratively prohibited)
+    *10.3.60.254 icmp_seq=2 ttl=255 time=3.491 ms (ICMP type:3, code:13, Communication administratively prohibited)
+
+Et voila ! 🌞
+
+
+
