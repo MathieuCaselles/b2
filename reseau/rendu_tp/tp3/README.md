@@ -134,13 +134,13 @@ L'infra fonctionne:
 Il faut créer des ACL sur le router car actuellement tout le monde peut se ping à causes des sous interfaces du routeur. Je met des des ACL pour interdire certaines ip d'aller ping d'autres ip non voulu.  
   
 
-Pour se faire je commence par le classique `conf t`.
+Pour ce faire je commence par le classique `conf t`.
 
 Je créé ensuite une liste ACL étendue pour le réseau admin d'abord avec `access-list 100 deny ip 10.3.10.0 0.0.0.255 10.3.20.0 0.0.0.255`.  
 Cette premiere commande veut dire que je créer un access-list lié au numéro 100 qui va interdire les ip du réseau `10.3.10.0/24` (du réseau admin) de communiquer avec le réseau `10.3.20.0/24` (le réseau user).  
 Je répète ensuite cette ligne de commande autant de fois que je veux que le réseau admin ne doit pas communiquer avec d'autres réseaux précis. 
   
-Je termine ensuite avec `access-list 100 permit ip any any` sinon j'aurais un problème de timeout avec toute les ip.  
+Je termine ensuite avec `access-list 100 permit ip any any` sinon j'aurais un problème de timeout avec toutes les ip.  
   
 Vu que le réseau admin se situe sur la sous interface e0/0.10, je lie donc cette access-list avec ce sous réseau:
 
@@ -184,7 +184,7 @@ J'obtient à la fin tout cela:
         20 permit ip any any
 
   
-'est bon ! le `"qui a accès à qui exactement ?"` est fonctionnel !
+C'est bon ! le `"qui a accès à qui exactement ?"` est fonctionnel !
 
 Voici quelques test: 
 
